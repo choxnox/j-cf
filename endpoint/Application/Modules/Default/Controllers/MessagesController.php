@@ -25,7 +25,7 @@ class MessagesController extends Library_Rest_Controller
 			$messages = (new Model_Db_Table_Messages)->fetchAll(null, 'id DESC', 20, $paramPage - 1);
 
 			// Let's prepare data for the output
-			$data = array();
+			$data = array('data' => array());
 
 			foreach ($messages->toArray() as $message)
 			{
