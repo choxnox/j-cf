@@ -2,7 +2,6 @@
 
 System has 3 components: API endpoint, message processor and dashboard
 
-### Method of operation
-
+#### Method of operation
 aaaaaa
 
