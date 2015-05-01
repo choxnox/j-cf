@@ -1,0 +1,1 @@
+<?php class Model_Db_Entity_Message extends Model_Db_Entity_Base{}

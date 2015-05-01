@@ -1,0 +1,14 @@
+{
+    "name": "vendor/currencyfair-endpoint",
+    "description": "Description of project currencyfair-endpoint.",
+    "authors": [
+        {
+            "name": "Neo",
+            "email": "your@email.here"
+        }
+    ],
+    "require": {
+        "wisembly/elephant.io": "dev-master",
+        "ukko/phpredis-phpdoc": "dev-master"
+    }
+}

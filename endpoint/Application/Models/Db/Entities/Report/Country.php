@@ -1,0 +1,1 @@
+<?php class Model_Db_Entity_Report_Country extends Model_Db_Entity_Base{}
