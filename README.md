@@ -1,8 +1,9 @@
 # j-cf
 
-System has 3 components: API endpoint, message processor and dashboard
+System has 3 components: API endpoint, message processor and dashboard.
 
 API endpoint (to POST messages): http://146.185.169.94/currencyfair/endpoint/messages
+
 Dashboard: http://146.185.169.94/currencyfair/dashboard/
 
 #### System operation (an overview)
