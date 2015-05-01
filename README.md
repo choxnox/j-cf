@@ -14,4 +14,14 @@ Technologies used:
  3. Socket.io (to communicate with the message processor system)
  4. Redis (for authentication)
 
+#### Message processor
+When processor receives a message, new Gearman worker is created and new background job is submitted which notifies the dashboard that there are new messages received (realtime reporting), and which generates some dummy report (dummy just to showcase how processor would operate in the whole system) that we can also see in the dashboard in realtime.
 
+NOTE: In order to prevent clogging the communication channels due to possible high load, notifications are sent to the dashboard each second. This allows sending batched message IDs to the dashboard. As a result the dashboard doesn't need to make separate API calls for each message, this allows to fetch few messages in one API call.
+
+Technologies used:
+
+ 1. NodeJS
+ 2. MySQL (to store generated reports)
+ 2. Socket.io (to communicate with the API endpoint and the dashboard)
+ 3. Gearman (to process messages as background jobs)
