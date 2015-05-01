@@ -14,6 +14,7 @@ Technologies used:
  3. Socket.io (to communicate with the message processor system)
  4. Redis (for authentication)
 
+
 #### Message processor
 When processor receives a message, new Gearman worker is created and new background job is submitted which notifies the dashboard that there are new messages received (realtime reporting), and which generates some dummy report (dummy just to showcase how processor would operate in the whole system) that we can also see in the dashboard in realtime.
 
