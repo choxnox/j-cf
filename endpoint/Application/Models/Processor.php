@@ -17,6 +17,12 @@ class Model_Processor
 	
 	public function processMessage($data)
 	{
+		// Let's provide the token to our processor so it knows we're the trusted source
+		$data = array(
+			'token' => 'x6bQ78k6d63B1678Ncj8rUoT0z5Tv0Gv',
+			'message' => $data
+		);
+		
 		$this->getSocket()->initialize();
 		$this->getSocket()->emit('processMessage', $data);
 		$this->getSocket()->close();
