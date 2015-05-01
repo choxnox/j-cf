@@ -1,0 +1,15 @@
+<div class="alert alert-<?= $this->options['color'] ?> <?= $this->options['closable'] ? 'alert-dismissable' : ''; ?>">
+    <? if ($this->options['closable']) { ?>
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+            <i class="bji bji-times"></i>
+        </button>
+    <? } ?>
+    <i class="<?= $this->options['icon']; ?>"></i>
+    <? if ($this->options['strong']) { ?>
+        <strong>
+            <?= $this->options['message']; ?>
+        </strong>
+    <? } else { ?>
+        <?= $this->options['message']; ?>
+    <? } ?>
+</div>

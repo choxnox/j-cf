@@ -1,0 +1,453 @@
+<div class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container">
+		<div class="navbar-header">
+			<a class="navbar-brand" href="#">Dashboard</a>
+		</div>
+		<div class="collapse navbar-collapse navbar-left">
+			<ul class="nav navbar-nav">
+				<li>
+					<a id="realtime-demo" href="#">
+						<i class="glyphicon glyphicon-remove"></i>
+						Generate real-time trade messages
+					</a>
+				</li>
+			</ul>
+		</div>
+		<div class="collapse navbar-collapse navbar-right">
+			<ul class="nav navbar-nav">
+				<li>
+					<a href="<?= $this->url(array(), 'auth-logout'); ?>">Logout</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>
+<div class="container">
+	<div class="row">
+		<div class="col-xs-5">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					Messages per country (today)
+				</div>
+				<div class="panel-body">
+					<div id="map" style="height: 400px"></div>
+				</div>
+			</div>
+		</div>
+		<div class="col-xs-7">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					Countries share (today)
+				</div>
+				<div class="panel-body">
+					<div id="pie" style="height: 400px"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					Latest messages
+				</div>
+				<div class="panel-body">
+					<table id="messages" class="table table-bordered collapsed" style="margin: 0">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>User ID</th>
+								<th>Currency from</th>
+								<th>Currency to</th>
+								<th>Amount sell</th>
+								<th>Amount buy</th>
+								<th>Rate</th>
+								<th>Date / time</th>
+								<th>Country</th>
+							</tr>
+						</thead>
+						<tbody>
+							
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+var api = {};
+var countries = [];
+var messages = [];	
+var mapChart, pieChart;
+var mapGeoJSON;
+	
+$(function() {
+	api = {
+		clientId: "<?= $this->api['clientId']; ?>",
+		accessToken: "<?= $this->api['accessToken']; ?>"
+	};
+	
+	/**
+	 * Add row(s) to the table
+	 */
+	var addTableRows = function(tableSelector, data) {
+		var table = $(tableSelector);
+		var tableBody = table.find("tbody");
+		var tableHeader = table.find("thead tr");
+		
+		$.each(data, function(index, row) {
+			var rowHtml = "<tr>";
+			
+			$.each(row, function(index, column) {
+				rowHtml += "<td>" + column + "</td>";
+			});
+			
+			rowHtml += "</tr>";
+			
+			tableBody.prepend(rowHtml);
+		});
+		
+		if (table.hasClass("collapsed") && tableBody.children("tr:not(.notification)").length > 20 && !tableBody.find("tr.expand").length)
+			tableBody.append("<tr class='expand success'><td colspan='" + tableHeader.children("th").length + "'><a href='#'>Click here to expand table</a></td></tr>");
+	};
+
+	/**
+	 * Add notification row at the top of the table
+	 */
+	var addNotificationRow = function(tableSelector, message, count) {
+		var table = $(tableSelector);
+		var row = table.find("tr.notification");
+		var cols = table.find("thead").children("tr").children().length;
+		
+		table = table.find("tbody");
+		
+		if (!row.length)
+		{
+			table.prepend("<tr class='notification info'><td colspan='" + cols + "'><a href='#'></a></td></tr>");
+			var row = table.find("tr.notification");
+		}
+		
+		row.find("td a").html(message.replace("{{count}}", count));
+		row.show();
+	};
+
+	/**
+	 * Update the map chart
+	 */
+	var updateMapData = function(data) {
+		$.each(data, function(index, country) {
+			var dataCountry = _.findWhere(mapChart.series[0].data, { key: country.country_code });
+
+			if (dataCountry)
+				dataCountry.update(country.count_messages, false);
+		});
+		
+		mapChart.redraw();
+	};
+
+	/**
+	 * Update the pie chart
+	 */
+	var updatePieData = function(data) {
+		var data = _.sortBy(data, "count_messages");
+		
+		$.each(data, function(index, country) {
+			var dataCountry = _.findWhere(countries, { id: country.country_code });
+			
+			if (dataCountry) 
+			{
+				var dataPie = _.findWhere(pieChart.series[0].data, { name: dataCountry.name });
+
+				if (dataPie)
+					dataPie.update(country.count_messages, false);
+				else
+				{
+					pieChart.series[0].addPoint({
+						name: dataCountry.name,
+						y: country.count_messages
+					}, false);
+				}
+			}
+		});
+		
+		pieChart.redraw();
+	};
+	
+	/**
+	 * Fetch messages from our REST server
+	 */
+	var fetchMessages = function(ids, callback) {
+		if (ids && ids.constructor === Array) 
+		{
+			var params = {
+				id: ids.join(",")
+			};
+		}
+
+		$.ajax({
+			type: "GET",
+			url: "http://146.185.169.94/currencyfair/endpoint/messages",
+			data: params,
+			headers: {
+				"Authorization": api.clientId + ":" + api.accessToken
+			},
+			success: function(data) {
+				if (callback && typeof callback === "function")
+					callback(data);
+			},
+			statusCode: {
+				401: function() {
+					logoutSession();
+				},
+				403: function() {
+					logoutSession();
+				}
+			}
+		});
+	};
+
+	/**
+	 * Fetch report by country from our REST server
+	 */
+	var fetchReportByCountry = function(callback) {
+		var params = {
+			date: "today"
+		};		
+		
+		$.ajax({
+			type: "GET",
+			url: "http://146.185.169.94/currencyfair/endpoint/reports/by-country",
+			data: params,
+			headers: {
+				"Authorization": api.clientId + ":" + api.accessToken
+			},
+			success: function(data) {
+				if (callback && typeof callback === "function")
+					callback(data);
+			},
+			statusCode: {
+				401: function() {
+					logoutSession();
+				},
+				403: function() {
+					logoutSession();
+				}
+			}
+		});
+	};
+	
+	/**
+	 * If access token is expired, redirect user to relogin
+	 */	
+	var logoutSession = function() {
+		window.location = "/currencyfair/dashboard/logout";
+	};
+
+	/**
+	 * Fetch inital messages
+	 */
+	fetchMessages(null, function(data) {
+		data = data.data.reverse();
+		addTableRows("#messages", data);
+	});
+
+	/**
+	 * Create socket to our notification server and listen for events
+	 */
+	initNotificationServer = function() {
+		var socket = io("http://146.185.169.94:5668");
+		
+		socket.on("updateReports", function(data) {
+			fetchMessages(data.messageIds, function(data) {
+				data = data.data.reverse();
+				messages = messages.concat(data);
+
+				if (messages.length)
+				{
+					if (messages.length === 1)
+						addNotificationRow("#messages", "<i class='glyphicon glyphicon-refresh'></i> There is 1 new message. Click here to refresh.", 1);
+					else
+						addNotificationRow("#messages", "<i class='glyphicon glyphicon-refresh'></i> There are {{count}} new messages. Click here to refresh.", messages.length);
+				}
+			});
+			
+			fetchReportByCountry(function(data) {
+				updateMapData(data.data);
+				updatePieData(data.data);
+			});
+		});
+	}();
+	
+	/**
+	 * Display new messages inside table
+	 */	
+	initRefreshMessagesTable = function() {
+		$(document).on("click", "#messages tr.notification a", function(event) {
+			event.preventDefault();
+			
+			$(this).closest("tr").remove();
+
+			messagesToAdd  = messages.splice(0, messages.length);
+			
+			addTableRows("#messages", messagesToAdd);
+		});
+	}();
+
+	/**
+	 * Display all hidden messages inside table
+	 */
+	initExpandMessagesTable = function() {
+		$(document).on("click", "#messages tr.expand a", function(event) {
+			event.preventDefault();
+
+			$(this).closest("table").removeClass("collapsed");
+			$(this).closest("tr").remove();
+		});
+	}();
+
+	/**
+	 * Randomly generate data and call our REST server; can be used for review purposes
+	 */
+	initRandomDataGenerator = function() {
+		var currencies = ["USD", "GBP", "EUR", "AUD", "TRY", "CAD", "CHF", "JPY"];	
+		var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "SEP", "OCT", "NOV", "DEC"];
+
+		$("#realtime-demo").on("click", function() {
+			$(this).children("i").toggleClass("glyphicon-ok glyphicon-remove");
+
+			if ($(this).data("active") === "true")
+			{
+				$(this).data("active", "false");
+
+				clearTimeout(window.realtime_generator_id);
+			}
+			else
+			{
+				$(this).data("active", "true");
+
+				window.realtime_generator = function() {
+					var temp_currencies = currencies.slice(0);
+
+					var userId = (Math.floor(Math.random() * (99999 - 10000 + 1) + 10000)).toString();
+
+					var currencyFromIndex = Math.floor(Math.random() * (temp_currencies.length));
+					var currencyFrom = temp_currencies[currencyFromIndex];
+					temp_currencies.splice(currencyFromIndex, 1);
+
+					var currencyToIndex = Math.floor(Math.random() * (temp_currencies.length));
+					var currencyTo = temp_currencies[currencyToIndex];
+
+					var rate = parseFloat((Math.random() * (1.5 - 0.5) + 0.5).toFixed(5));
+
+					var amountSell = parseFloat((Math.random() * (5000 - 50) + 50).toFixed(2));
+					var amountBuy = parseFloat((amountSell * rate).toFixed(2));
+
+					var datetime = new Date();
+					var timePlaced = datetime.getDate() + "-" + months[datetime.getMonth()] + "-" + datetime.getFullYear() + " " + datetime.getHours() + ":" + datetime.getMinutes() + ":" + datetime.getSeconds();
+
+					var originatingCountryIndex = Math.floor(Math.random() * (countries.length));
+					var originatingCountry = countries[originatingCountryIndex].id;
+
+					var data = {
+						"userId": userId,
+						"currencyFrom": currencyFrom,
+						"currencyTo": currencyTo,
+						"amountSell": amountSell,
+						"amountBuy": amountBuy,
+						"rate": rate,
+						"timePlaced": timePlaced,
+						"originatingCountry": originatingCountry
+					};
+
+					$.ajax({
+						type: "POST",
+						url: "http://146.185.169.94/currencyfair/endpoint/messages",
+						data: JSON.stringify(data),
+						dataType: "json"
+					});
+
+					var delay = Math.round(Math.random() * (500 - 50)) + 50;
+					window.realtime_generator_id = setTimeout(window.realtime_generator, delay);
+				};
+
+				window.realtime_generator();
+			}
+		});
+	}();
+	
+	/**
+	 * Initialize Highcharts library
+	 */	
+	initCharts = function() {
+		var mapName = "custom/europe";		
+		var mapData = [], pieData = [];
+
+		mapGeoJSON = Highcharts.maps[mapName];
+
+		$.each(mapGeoJSON.features, function(index, feature) {
+			
+			if (feature.id !== "CNM")
+			{
+				countries.push({
+					id: feature.id,
+					name: feature.properties.name
+				});
+			}
+			
+			mapData.push({
+				key: feature.properties["iso-a2"],
+				value: 0
+			});
+		});
+		
+		mapChart = new Highcharts.Map({
+			chart: {
+				renderTo: "map"
+			},
+			colorAxis: {
+				min: 0,
+				stops: [
+					[0, "#EFEFFF"],
+					[0.5, Highcharts.getOptions().colors[0]],
+					[1, Highcharts.Color(Highcharts.getOptions().colors[0]).brighten(-0.5).get()]
+				]
+			},		
+			legend: {
+				layout: "vertical",
+				align: "left",
+				verticalAlign: "bottom"
+			},			
+			series: [
+				{
+					data: mapData,
+					joinBy: ["iso-a2", "key"],
+					mapData: mapGeoJSON,
+					name: "Country of origin"
+				}
+			],
+			title: null
+		});
+		
+		pieChart = new Highcharts.Chart({
+			chart: {
+				renderTo: "pie"
+			},
+			series: [
+				{
+					type: "pie"
+				}
+			],
+			title: null
+		});
+		
+		fetchReportByCountry(function(data) {
+			updateMapData(data.data);
+			updatePieData(data.data);
+		});
+	}();
+});
+	
+</script>

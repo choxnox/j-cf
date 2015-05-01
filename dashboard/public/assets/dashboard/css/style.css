@@ -1,0 +1,57 @@
+body {
+	background-color: #f2f1ec;
+	padding-top: 70px;
+}
+
+form .errors {
+	list-style: none;
+	padding: 0;
+}
+
+form .errors li {
+	background-color: #d9534f;
+	color: #fff;
+	display: inline-block;
+	font-size: 90%;
+	font-weight: bold;
+	padding: 4px 8px;
+}
+
+.form-control[type="text"],
+.form-control[type="password"] {
+	border-radius: 0;
+}
+
+table.collapsed tbody tr:not(.expand) {
+	display: none;
+}
+
+table.collapsed tbody tr:not(.expand):not(.notification):nth-child(-n + 24) {
+	display: table-row;
+}
+
+table.collapsed tbody tr:not(.expand):not(.notification):nth-child(21) {
+	opacity: 0.8;
+}
+
+table.collapsed tbody tr:not(.expand):not(.notification):nth-child(22) {
+	opacity: 0.6;
+}
+
+table.collapsed tbody tr:not(.expand):not(.notification):nth-child(23) {
+	opacity: 0.4;
+}
+
+table.collapsed tbody tr:not(.expand):not(.notification):nth-child(24) {
+	opacity: 0.2;
+}
+
+table tr.expand td,
+table tr.notification td {
+	font-weight: bold;
+	text-align: center;
+}
+
+table tr.notification {
+	display: none;
+}

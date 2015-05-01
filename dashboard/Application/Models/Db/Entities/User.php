@@ -1,0 +1,1 @@
+<?php class Model_Db_Entity_User extends Model_Db_Entity_Base{}

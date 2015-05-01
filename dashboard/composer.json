@@ -1,0 +1,13 @@
+{
+    "name": "vendor/currencyfair-dashboard",
+    "description": "Description of project currencyfair-dashboard.",
+    "authors": [
+        {
+            "name": "Neo",
+            "email": "your@email.here"
+        }
+    ],
+    "require": {
+		
+    }
+}
