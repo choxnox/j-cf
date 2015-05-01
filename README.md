@@ -1,5 +1,7 @@
-# j-cf
+# j-cf #
 
-Message processing system has 3 components: API endpoint, processor, and dashboard.
+System has 3 components: API endpoint, message processor and dashboard
 
-*** aaaaa
+## Method of operation ##
+
+aaaaaa
