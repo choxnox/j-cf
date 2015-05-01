@@ -43,7 +43,7 @@ Technologies used:
 #### Dashboard
 Dashboard allows realtime overview as messages are being added to the system. It requires admin privileges in order to access web application. When user logs into the system, an access token is generated for them which will be used to make API calls to the API endpoint.
 
-NOTE: The is a test data generator which when enabled will generate dummy data and post it to the endpoint so we can see how realtime system actually works. If you have you're own test data generator then I guess you won't be needing this one.
+NOTE: There is a test data generator which when enabled will generate dummy data and post it to the endpoint so we can see how realtime system actually works. If you have you're own test data generator then I guess you won't be needing this one.
 
 Technologies used:
 
