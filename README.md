@@ -5,6 +5,7 @@ System has 3 components: API endpoint, message processor and dashboard
 NOTE: In this test task HTTP protocol had to be used because certain web browsers such as Firefox do not allow HTTPS protocol to be used with Socket.IO when self-signed certificates are involved which is why I had to switch to HTTP. Of course, in real world systems all communication (between user - API endpoint - message processor -  dashboard) would go through HTTPS protocol.
 
 API endpoint (to POST messages): http://146.185.169.94/currencyfair/endpoint/messages
+
 Dashboard: http://146.185.169.94/currencyfair/dashboard/
 
 #### System operation (an overview)
