@@ -41,21 +41,25 @@ var intervalId = setInterval(function() {
 processorSocket.on("connection", function(socket) {
 	// Let's process message that we receive from our endpoint
 	socket.on("processMessage", function(data) {
-		// Proxy data to our Gearman backgroud job so that we can be ready for the next message
-		processorGearman.submitJobBg(
-			"processMessageJob",
-			{
-				uniqueid: sprintf("%s::%s", "currencyfair-processor", uuid.v4())
-			},
-			JSON.stringify(data),
-			function(error) {
-				if (error) 
+		// Only process message if it came from trusted source
+		if (data.token && data.token === "x6bQ78k6d63B1678Ncj8rUoT0z5Tv0Gv")
+		{
+			// Proxy data to our Gearman backgroud job so that we can be ready for the next message
+			processorGearman.submitJobBg(
+				"processMessageJob",
 				{
-					console.log("Error (currencyfair-processor):");
-					console.error(error);					
+					uniqueid: sprintf("%s::%s", "currencyfair-processor", uuid.v4())
+				},
+				JSON.stringify(data.message),
+				function(error) {
+					if (error) 
+					{
+						console.log("Error (currencyfair-processor):");
+						console.error(error);					
+					}
 				}
-			}
-		);
+			);
+		}
 	});
 });
 
